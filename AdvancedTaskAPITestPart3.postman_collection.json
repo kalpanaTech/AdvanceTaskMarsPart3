@@ -1,0 +1,1163 @@
+{
+	"info": {
+		"_postman_id": "669344dc-39a6-474e-bae3-ed8e6ceb5387",
+		"name": "AdvancedTaskAPITestPart3",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38261730"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "SignUp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response time is less than 200ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Success Message\", function () {\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData.isSuccess).to.eql(true);\r",
+									"});\r",
+									"\r",
+									"var jsonData = pm.response.json();\r",
+									"pm.environment.set(\"token\", jsonData.token.token);\r",
+									"\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"rememberMe\": false,\r\n  \"email\": \"explore@gmail.com\",\r\n  \"password\": \"kal765pana\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{user_base_url}}/authentication/authentication/signin",
+							"host": [
+								"{{user_base_url}}"
+							],
+							"path": [
+								"authentication",
+								"authentication",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Languages",
+					"item": [
+						{
+							"name": "Add Language",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Basic Response Validations\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 200ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+											"});\r",
+											"\r",
+											"// Parse response JSON once\r",
+											"const response = pm.response.json();\r",
+											"\r",
+											"// Environment Setup\r",
+											"if (response.id) {\r",
+											"    pm.environment.set(\"language_id\", response.id);\r",
+											"}\r",
+											"\r",
+											"//Schema Validation and other assertions\r",
+											"if (response.success) {\r",
+											"    pm.test(\"Language added successfully\", function () {\r",
+											"        pm.expect(response.success).to.be.true;\r",
+											"    });\r",
+											"\r",
+											"    // Schema for successful case\r",
+											"    const successSchema = {\r",
+											"        \"type\": \"object\",\r",
+											"        \"properties\": {\r",
+											"            \"success\": { \"type\": \"boolean\" },\r",
+											"            \"id\": { \"type\": \"string\" }\r",
+											"        },\r",
+											"        \"required\": [\"success\", \"id\"]\r",
+											"    };\r",
+											"\r",
+											"    pm.test(\"Response schema Validated\", function () {\r",
+											"        pm.response.to.have.jsonSchema(successSchema);\r",
+											"    });\r",
+											"\r",
+											"} else if (response.message === \"This language is already exist in your language list.\") {\r",
+											"    pm.test(\"Duplicate language not allowed\", function () {\r",
+											"        pm.expect(response.success).to.be.false;\r",
+											"        pm.expect(response.message).to.eql(\"This language is already exist in your language list.\");\r",
+											"    });\r",
+											"\r",
+											"    // Schema for duplicate/negative case\r",
+											"    const duplicateSchema = {\r",
+											"        \"type\": \"object\",\r",
+											"        \"properties\": {\r",
+											"            \"success\": { \"type\": \"boolean\" },\r",
+											"            \"message\": { \"type\": \"string\" }\r",
+											"        },\r",
+											"        \"required\": [\"success\", \"message\"]\r",
+											"    };\r",
+											"\r",
+											"    pm.test(\"Response schema Validated\", function () {\r",
+											"        pm.response.to.have.jsonSchema(duplicateSchema);\r",
+											"    });\r",
+											"\r",
+											"} else if (pm.response.code === 401) {\r",
+											"    pm.test(\"Unauthorized - cannot add without authentication\", function () {\r",
+											"        pm.expect(response).to.be.empty;\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"// Header Validations\r",
+											"pm.test(\"Content-Type is application/json\", () => {\r",
+											"    pm.response.to.have.header(\"Content-Type\");\r",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Server is Kestrel\", () => {\r",
+											"    pm.response.to.have.header(\"Server\");\r",
+											"    pm.expect(pm.response.headers.get(\"Server\")).to.eql(\"Kestrel\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Transfer-Encoding is chunked\", () => {\r",
+											"    pm.response.to.have.header(\"Transfer-Encoding\");\r",
+											"    pm.expect(pm.response.headers.get(\"Transfer-Encoding\")).to.eql(\"chunked\");\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"English\",\r\n  \"level\": \"Conversational\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+									"host": [
+										"{{profile_base_url}}"
+									],
+									"path": [
+										"profile",
+										"profile",
+										"addLanguage"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Positive:  Add Language with number and character inputs",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"@#$%&@76\",\r\n  \"level\": \"Conversational\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": "",
+									"header": [],
+									"cookie": [
+										{
+											"expires": "Invalid Date"
+										}
+									],
+									"body": ""
+								},
+								{
+									"name": "Positive:  Add Language with existing Language Name",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"English\",\r\n  \"level\": \"Basic\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": "",
+									"header": [],
+									"cookie": [
+										{
+											"expires": "Invalid Date"
+										}
+									],
+									"body": ""
+								},
+								{
+									"name": "Destructive: Add Language with large payload",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"It says I need to type at least ten characters, so here's this. Y'know what? I'm gonna type one hundred characters instead. Actually, I'm going to type five hundred characters. I'm definitely not going to type anywhere near one thousand characters, because that'd be ridiculous. Even if I wanted to type one thousand characters, I have to go to bed now anyway, so I simply don't have the time. I mean, I could just type a bunch of random letters or hold down one key, but that would be no fun at all.\",\r\n  \"level\": \"Conversational\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": "",
+									"header": [],
+									"cookie": [
+										{
+											"expires": "Invalid Date"
+										}
+									],
+									"body": ""
+								},
+								{
+									"name": "Negative: Add Language with existing language name & level",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"English\",\r\n  \"level\": \"Conversational\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Positive: Add Language without Language name",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"\",\r\n  \"level\": \"Conversational\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Positive: Add Language without Language level",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"English\",\r\n  \"level\": \"\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": "",
+									"header": [],
+									"cookie": [
+										{
+											"expires": "Invalid Date"
+										}
+									],
+									"body": ""
+								},
+								{
+									"name": "Positive: Add Language without Language level and name",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"name\": \"\",\r\n  \"level\": \"\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/addLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"addLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": "",
+									"header": [],
+									"cookie": [
+										{
+											"expires": "Invalid Date"
+										}
+									],
+									"body": ""
+								}
+							]
+						},
+						{
+							"name": "Update Language",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Basic Response Validations\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 200ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+											"});\r",
+											"\r",
+											"// Parse response JSON once\r",
+											"const response = pm.response.json();\r",
+											"\r",
+											"//Schema Validation and other assertions\r",
+											"if (response.success) {\r",
+											"    pm.test(\"Language updated successfully\", function () {\r",
+											"        pm.expect(response.success).to.be.true;\r",
+											"        pm.expect(response.message).to.eql(\"Language added successfully\");\r",
+											"    });\r",
+											"\r",
+											"    // Schema for successful case\r",
+											"    const successSchema =  {\r",
+											"        \"type\": \"object\",\r",
+											"        \"properties\": {\r",
+											"            \"success\": { \"type\": \"boolean\" },\r",
+											"            \"message\": { \"type\": \"string\" }\r",
+											"        },\r",
+											"        \"required\": [\"success\", \"message\"]\r",
+											"    };\r",
+											"\r",
+											"    pm.test(\"Validate response schema (Success)\", function () {\r",
+											"        pm.response.to.have.jsonSchema(successSchema);\r",
+											"    });\r",
+											"\r",
+											"} else if (response.message === \"This language is already added to your language list.\") {\r",
+											"    pm.test(\"Duplicate language not allowed\", function () {\r",
+											"        pm.expect(response.success).to.be.false;\r",
+											"        pm.expect(response.message).to.eql(\"This language is already added to your language list.\");\r",
+											"    });\r",
+											"\r",
+											"    // Schema for duplicate/negative case\r",
+											"    const duplicateSchema = {\r",
+											"        \"type\": \"object\",\r",
+											"        \"properties\": {\r",
+											"            \"success\": { \"type\": \"boolean\" },\r",
+											"            \"message\": { \"type\": \"string\" }\r",
+											"        },\r",
+											"        \"required\": [\"success\", \"message\"]\r",
+											"    };\r",
+											"\r",
+											"    pm.test(\"Validate response schema (Success)\", function () {\r",
+											"        pm.response.to.have.jsonSchema(duplicateSchema);\r",
+											"    });\r",
+											"\r",
+											"} else if (response.message === \"Error while adding new language\") {\r",
+											"        pm.test(\"Unable to find Update Language ID or incorrect ID\", function () {\r",
+											"            pm.expect(response.success).to.be.false;\r",
+											"            pm.expect(response.message).to.eql(\"Error while adding new language\");\r",
+											"        });\r",
+											"    \r",
+											"}else if (pm.response.code === 401) {\r",
+											"    pm.test(\"Unauthorized - cannot add without authentication\", function () {\r",
+											"        pm.expect(response).to.be.empty;\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"// Header Validations\r",
+											"pm.test(\"Content-Type is application/json\", () => {\r",
+											"    pm.response.to.have.header(\"Content-Type\");\r",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Server is Kestrel\", () => {\r",
+											"    pm.response.to.have.header(\"Server\");\r",
+											"    pm.expect(pm.response.headers.get(\"Server\")).to.eql(\"Kestrel\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Transfer-Encoding is chunked\", () => {\r",
+											"    pm.response.to.have.header(\"Transfer-Encoding\");\r",
+											"    pm.expect(pm.response.headers.get(\"Transfer-Encoding\")).to.eql(\"chunked\");\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer  {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"German\",\r\n  \"level\": \"Fluent\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+									"host": [
+										"{{profile_base_url}}"
+									],
+									"path": [
+										"profile",
+										"profile",
+										"updateLanguage"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Positive: Update Language with numbers and characters",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"@#$%&@98\",\r\n  \"level\": \"Fluent\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Positive: Update Language with existing Language Name",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"German\",\r\n  \"level\": \"Basic\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Destructive: Update Language with large payload",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"It says I need to type at least ten characters, so here's this. Y'know what? I'm gonna type one hundred characters instead. Actually, I'm going to type five hundred characters. I'm definitely not going to type anywhere near one thousand characters, because that'd be ridiculous. Even if I wanted to type one thousand characters, I have to go to bed now anyway, so I simply don't have the time. I mean, I could just type a bunch of random letters or hold down one key, but that would be no fun at all.\",\r\n  \"level\": \"Fluent\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Negative: Update Language with existing language name & level",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"German\",\r\n  \"level\": \"Fluent\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Positive: Update Language without Language name",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"\",\r\n  \"level\": \"Fluent\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Positive: Update Language without Language level",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"German\",\r\n  \"level\": \"\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Positive: Update Language without Language name and level",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{jwtToken}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{language_id}}\",\r\n  \"name\": \"German\",\r\n  \"level\": \"Fluent\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/updateLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"updateLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								}
+							]
+						},
+						{
+							"name": "Get Language",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 200ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+											"});\r",
+											"\r",
+											"// Assertion - Validate successful retrieval of language list\r",
+											"var statusCode = pm.response.code;\r",
+											"if (statusCode === 200) {\r",
+											"    pm.test(\"Retrieve list of languages successfully\", function () {\r",
+											"        var response = pm.response.json();\r",
+											"        pm.expect(response).to.be.an('array');\r",
+											"    });\r",
+											"\r",
+											"    // Schema validation\r",
+											"    const schema = {\r",
+											"        \"type\": \"array\",\r",
+											"        \"items\": {\r",
+											"            \"type\": \"object\",\r",
+											"            \"properties\": {\r",
+											"                \"personLanguageId\": { \"type\": \"string\" },\r",
+											"                \"language\": { \"type\": \"string\" },\r",
+											"                \"languageLevel\": { \"type\": \"string\" }\r",
+											"            },\r",
+											"            \"required\": [\"personLanguageId\", \"language\", \"languageLevel\"]\r",
+											"        }\r",
+											"    };\r",
+											"\r",
+											"    pm.test(\"Response matches schema\", function () {\r",
+											"        pm.response.to.have.jsonSchema(schema);\r",
+											"    });\r",
+											"\r",
+											"//Assertion for Unauthorized requests\r",
+											"} else if (statusCode === 401) {\r",
+											"    pm.test(\"Unauthorized request should return 401\", function () {\r",
+											"        pm.expect(statusCode).to.eql(401);\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"// Header Validations\r",
+											"pm.test(\"Content-Type is application/json\", () => {\r",
+											"    pm.response.to.have.header(\"Content-Type\");\r",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Server is Kestrel\", () => {\r",
+											"    pm.response.to.have.header(\"Server\");\r",
+											"    pm.expect(pm.response.headers.get(\"Server\")).to.eql(\"Kestrel\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Transfer-Encoding is chunked\", () => {\r",
+											"    pm.response.to.have.header(\"Transfer-Encoding\");\r",
+											"    pm.expect(pm.response.headers.get(\"Transfer-Encoding\")).to.eql(\"chunked\");\r",
+											"});\r",
+											"\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer  {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{profile_base_url}}/profile/profile/getLanguage",
+									"host": [
+										"{{profile_base_url}}"
+									],
+									"path": [
+										"profile",
+										"profile",
+										"getLanguage"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Language",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () { \r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response time is less than 200ms\", function () {\r",
+											"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+											"});\r",
+											"\r",
+											"var statusCode = pm.response.code;\r",
+											"var response = null;\r",
+											"\r",
+											"// Try parsing JSON only if content-type is JSON\r",
+											"if (pm.response.headers.get(\"Content-Type\")?.includes(\"application/json\")) {\r",
+											"    response = pm.response.json();\r",
+											"}\r",
+											"\r",
+											"if (statusCode === 200 && response) {\r",
+											"    // Success test\r",
+											"    pm.test(\"Language Deletion success\", function () {\r",
+											"        pm.expect(response.success).to.eql(true);\r",
+											"    });\r",
+											"\r",
+											"    // Schema validation\r",
+											"    const schema = {\r",
+											"        \"type\": \"object\",\r",
+											"        \"properties\": {\r",
+											"            \"success\": { \"type\": \"boolean\" },\r",
+											"            \"language\": { \"type\": \"string\" }\r",
+											"        },\r",
+											"        \"required\": [\"success\", \"language\"]\r",
+											"    };\r",
+											"\r",
+											"    pm.test(\"Response matches schema\", function () {\r",
+											"        pm.response.to.have.jsonSchema(schema);\r",
+											"    });\r",
+											"\r",
+											"} else if (statusCode === 401) {\r",
+											"    pm.test(\"Unauthorized: Cannot delete without authentication\", function () {\r",
+											"        pm.expect(statusCode).to.eql(401);\r",
+											"    });\r",
+											"\r",
+											"} else if (statusCode === 500) {\r",
+											"    pm.test(\"Language Deletion failed, Invalid Id\", function () {\r",
+											"        pm.expect(statusCode).to.eql(500);\r",
+											"    });\r",
+											"\r",
+											"} else if (statusCode === 415) {\r",
+											"    pm.test(\"Language Deletion failed, Null Id\", function () {\r",
+											"        pm.expect(statusCode).to.eql(415);\r",
+											"    });\r",
+											"}\r",
+											"\r",
+											"// Header Validations\r",
+											"pm.test(\"Content-Type is application/json or text/html\", () => {\r",
+											"    pm.response.to.have.header(\"Content-Type\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Server is Kestrel\", () => {\r",
+											"    pm.response.to.have.header(\"Server\");\r",
+											"    pm.expect(pm.response.headers.get(\"Server\")).to.eql(\"Kestrel\");\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Transfer-Encoding is chunked\", () => {\r",
+											"    pm.response.to.have.header(\"Transfer-Encoding\");\r",
+											"    pm.expect(pm.response.headers.get(\"Transfer-Encoding\")).to.eql(\"chunked\");\r",
+											"});\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer  {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"id\": \"{{language_id}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{profile_base_url}}/profile/profile/deleteLanguage",
+									"host": [
+										"{{profile_base_url}}"
+									],
+									"path": [
+										"profile",
+										"profile",
+										"deleteLanguage"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Negative: Delete Language with Invalid ID",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer  {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"id\": \"{{lang_id}}\"\r\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/deleteLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"deleteLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								},
+								{
+									"name": "Negative: Delete Language with null ID",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer  {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{profile_base_url}}/profile/profile/deleteLanguage",
+											"host": [
+												"{{profile_base_url}}"
+											],
+											"path": [
+												"profile",
+												"profile",
+												"deleteLanguage"
+											]
+										}
+									},
+									"_postman_previewlanguage": null,
+									"header": null,
+									"cookie": [],
+									"body": null
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
